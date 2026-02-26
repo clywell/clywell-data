@@ -1,19 +1,22 @@
 # Clywell.Core.Data & Clywell.Core.Data.EntityFramework
 
-[![Build Status](https://github.com/clywell/clywell-core/actions/workflows/ci.yml/badge.svg)](https://github.com/clywell/clywell-core/actions)
+[![Build Status](https://github.com/clywell/clywell-core/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/clywell/clywell-core/actions/workflows/ci-cd.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![NuGet: Clywell.Core.Data](https://img.shields.io/nuget/v/Clywell.Core.Data?logo=nuget)](https://www.nuget.org/packages/Clywell.Core.Data/)
+[![NuGet: Clywell.Core.Data.EntityFramework](https://img.shields.io/nuget/v/Clywell.Core.Data.EntityFramework?logo=nuget)](https://www.nuget.org/packages/Clywell.Core.Data.EntityFramework/)
+[![NuGet: Clywell.Core.Data.Generators](https://img.shields.io/nuget/v/Clywell.Core.Data.Generators?logo=nuget)](https://www.nuget.org/packages/Clywell.Core.Data.Generators/)
 
 Data access abstractions and EF Core implementation for clean architecture .NET applications.
 
 ## Overview
 
-This solution provides two NuGet packages that enforce clean architecture by separating data access abstractions from their EF Core implementation:
+This solution provides three NuGet packages that enforce clean architecture by separating data access abstractions from their EF Core implementation, with optional source-generated compile-time DI:
 
-| Package                               | Purpose                                              | EF Core Dependency |
-| ------------------------------------- | ---------------------------------------------------- | ------------------ |
-| **Clywell.Core.Data**                 | Interfaces, specifications, and query abstractions   | **None**           |
-| **Clywell.Core.Data.EntityFramework** | EF Core implementations of all abstractions          | **Yes**            |
-| **Clywell.Core.Data.Generators**      | Roslyn source generator — emits compile-time `AddRepositories()` DI extension, replacing reflection-based assembly scanning | **None** |
+| Package                               | Link | Purpose                                              | EF Core Dependency |
+| ------------------------------------- | ---- | ---------------------------------------------------- | ------------------ |
+| **Clywell.Core.Data**                 | [![NuGet](https://img.shields.io/nuget/v/Clywell.Core.Data?style=flat-square)](https://www.nuget.org/packages/Clywell.Core.Data/) | Interfaces, specifications, and query abstractions   | **None**           |
+| **Clywell.Core.Data.EntityFramework** | [![NuGet](https://img.shields.io/nuget/v/Clywell.Core.Data.EntityFramework?style=flat-square)](https://www.nuget.org/packages/Clywell.Core.Data.EntityFramework/) | EF Core implementations of all abstractions          | **Yes**            |
+| **Clywell.Core.Data.Generators**      | [![NuGet](https://img.shields.io/nuget/v/Clywell.Core.Data.Generators?style=flat-square)](https://www.nuget.org/packages/Clywell.Core.Data.Generators/) | Roslyn source generator — emits compile-time `AddRepositories()` DI extension, replacing reflection-based assembly scanning | **None** |
 
 Your **Application layer** references only `Clywell.Core.Data` → zero EF Core dependency.  
 Your **Infrastructure layer** references `Clywell.Core.Data.EntityFramework` → provides the implementations.
