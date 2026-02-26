@@ -8,7 +8,7 @@ namespace Clywell.Core.Data;
 /// <remarks>
 /// <para>
 /// Extends <see cref="IReadRepository{TEntity, TId}"/> with write operations (Add, Update, Remove).
-/// Changes are not persisted until <see cref="IUnitOfWork.SaveChangesAsync"/> is called.
+/// Changes are not persisted until <see cref="IDataContext.SaveChangesAsync"/> is called.
 /// </para>
 /// <para>
 /// This interface is intended to be referenced from the Application layer. The Infrastructure

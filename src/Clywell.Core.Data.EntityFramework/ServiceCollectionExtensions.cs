@@ -16,7 +16,7 @@ public static class ServiceCollectionExtensions
     /// <remarks>
     /// Registers:
     /// <list type="bullet">
-    ///   <item><description><see cref="IUnitOfWork"/> as scoped (backed by <typeparamref name="TContext"/>)</description></item>
+    ///   <item><description><see cref="IDataContext"/> as scoped (backed by <typeparamref name="TContext"/>)</description></item>
     ///   <item><description><see cref="ISpecificationEvaluator"/> as singleton</description></item>
     ///   <item><description><see cref="DbContext"/> resolved as <typeparamref name="TContext"/></description></item>
     /// </list>
@@ -30,10 +30,11 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<ISpecificationEvaluator>(EfSpecificationEvaluator.Default);
 
         // Register UnitOfWork as scoped, backed by the concrete context
-        services.TryAddScoped<IUnitOfWork>(sp =>
+        services.TryAddScoped<IDataContext>(sp =>
         {
             var context = sp.GetRequiredService<TContext>();
-            return new EfUnitOfWork(context);
+            var evaluator = sp.GetRequiredService<ISpecificationEvaluator>();
+            return new EfDataContext(context, evaluator);
         });
 
         return services;

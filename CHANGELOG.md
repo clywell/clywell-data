@@ -20,20 +20,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Specification<T, TResult>` — projection spec builder extending `Specification<T>` with `Select()`
 - `IIncludeBuilder<T, TProperty>` — fluent builder for chaining `ThenInclude` / `ThenIncludeCollection`
 - `ISpecificationEvaluator` — pluggable specification-to-query translation interface
-- `IUnitOfWork` — `SaveChangesAsync` and `BeginTransactionAsync`
+- `IDataContext` — `Repository<TEntity, TId>()` (like `DbContext.Set<T>()`), `SaveChangesAsync`, and `BeginTransactionAsync`
 - `IDataTransaction` — `CommitAsync`, `RollbackAsync`, `IAsyncDisposable`
 - `OrderExpression<T>` and `IncludeExpression` — value types for specification internals
 
 #### `Clywell.Core.Data.EntityFramework` (EF Core Implementation)
 - `EfReadRepository<TEntity, TId>` — read-only EF Core repository; applies `AsNoTracking` by default
 - `EfRepository<TEntity, TId>` — full CRUD EF Core repository; `GetByIdAsync` uses `FindAsync` (tracked)
-- `EfUnitOfWork` — wraps `DbContext.SaveChangesAsync`
+- `EfDataContext` — wraps `DbContext`; exposes repositories via `Repository<TEntity, TId>()`, with per-entity caching, `SaveChangesAsync`, and `BeginTransactionAsync`
 - `EfDataTransaction` — wraps `IDbContextTransaction`; rolls back on disposal if uncommitted
 - `EfSpecificationEvaluator` — translates `ISpecification` to EF Core LINQ with Include, ThenInclude, ordering, and paging support
-- `ServiceCollectionExtensions.AddDataAccess<TContext>()` — registers `IUnitOfWork` (scoped) and `ISpecificationEvaluator` (singleton)
+- `ServiceCollectionExtensions.AddDataAccess<TContext>()` — registers `IDataContext` (scoped) and `ISpecificationEvaluator` (singleton)
 - `ServiceCollectionExtensions.AddRepository<TInterface, TImpl>()` — registers a single repository as scoped
 - `ServiceCollectionExtensions.AddRepositoriesFromAssembly(Assembly)` — scans an assembly and auto-registers all repository implementations
-- `ServiceCollectionExtensions.AddRepositoriesFromAssemblyContaining<T>()` — convenience overload scaning `typeof(T).Assembly`
+- `ServiceCollectionExtensions.AddRepositoriesFromAssemblyContaining<T>()` — convenience overload scanning `typeof(T).Assembly`
+
+#### `Clywell.Core.Data.Generators` (Source Generator)
+- Roslyn incremental source generator (`RepositoryRegistrationGenerator`) that scans the host compilation for concrete repository implementations at compile time
+- Emits a `RepositoryRegistrationExtensions` class into the consuming project's root namespace containing a single `AddRepositories(this IServiceCollection)` extension method
+- Each detected repository is registered via `TryAddScoped<TInterface, TImpl>()`, allowing manual overrides to take precedence
+- Detects any non-abstract, non-generic class whose interface hierarchy includes a user-defined sub-interface of `IRepository<,>` or `IReadRepository<,>`; the base interfaces themselves are not registered directly
+- Zero reflection at runtime — fully compatible with NativeAOT and the .NET trimmer
+- No runtime dependency; `DevelopmentDependency = true` means the package does not appear in consuming projects' dependency graphs
+- Replaces `AddRepositoriesFromAssembly()` / `AddRepositoriesFromAssemblyContaining<T>()` for projects that require AOT or trim compatibility
 
 [Unreleased]: https://github.com/clywell/clywell-core/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/clywell/clywell-core/releases/tag/v1.0.0

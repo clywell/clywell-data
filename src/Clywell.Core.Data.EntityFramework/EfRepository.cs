@@ -9,7 +9,7 @@ namespace Clywell.Core.Data.EntityFramework;
 /// <para>
 /// Extends <see cref="EfReadRepository{TEntity, TId}"/> with write operations backed by
 /// the EF Core change tracker. Changes are not persisted until
-/// <see cref="IUnitOfWork.SaveChangesAsync"/> is called.
+/// <see cref="IDataContext.SaveChangesAsync"/> is called.
 /// </para>
 /// </remarks>
 public class EfRepository<TEntity, TId> : EfReadRepository<TEntity, TId>, IRepository<TEntity, TId>

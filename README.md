@@ -13,6 +13,7 @@ This solution provides two NuGet packages that enforce clean architecture by sep
 | ------------------------------------- | ---------------------------------------------------- | ------------------ |
 | **Clywell.Core.Data**                 | Interfaces, specifications, and query abstractions   | **None**           |
 | **Clywell.Core.Data.EntityFramework** | EF Core implementations of all abstractions          | **Yes**            |
+| **Clywell.Core.Data.Generators**      | Roslyn source generator — emits compile-time `AddRepositories()` DI extension, replacing reflection-based assembly scanning | **None** |
 
 Your **Application layer** references only `Clywell.Core.Data` → zero EF Core dependency.  
 Your **Infrastructure layer** references `Clywell.Core.Data.EntityFramework` → provides the implementations.
@@ -23,9 +24,10 @@ Your **Infrastructure layer** references `Clywell.Core.Data.EntityFramework` →
 - **Specification Pattern** — Composable, testable, reusable query objects with fluent builder API
 - **Projection Specifications** — `Specification<T, TResult>` with `Select()` for read-optimized queries
 - **Eager Loading** — Strongly-typed `Include` / `ThenInclude` builder with collection support
-- **Unit of Work** — `IUnitOfWork` with `SaveChangesAsync` and `BeginTransactionAsync`
+- **Unit of Work** — `IDataContext` with `Repository<T, TId>()` (like `DbContext.Set<T>()`), `SaveChangesAsync`, and `BeginTransactionAsync` — single injection for command handlers
 - **Explicit Transactions** — `IDataTransaction` with `CommitAsync` / `RollbackAsync` and `IAsyncDisposable`
 - **DI Registration** — `AddDataAccess<TContext>()`, `AddRepository<TInterface, TImpl>()`, and `AddRepositoriesFromAssembly()` for auto-scanning
+- **Source Generator** — `Clywell.Core.Data.Generators` emits a compile-time `AddRepositories()` method — zero reflection, NativeAOT and trimmer compatible
 
 ## Installation
 
@@ -35,6 +37,9 @@ dotnet add package Clywell.Core.Data
 
 # Infrastructure layer (EF Core implementation)
 dotnet add package Clywell.Core.Data.EntityFramework
+
+# Source generator — compile-time DI registration (recommended, optional)
+dotnet add package Clywell.Core.Data.Generators
 ```
 
 ## Quick Start
@@ -160,46 +165,68 @@ Ticket? first = await _repository.FirstOrDefaultAsync(
     new ActiveTicketsByTenantSpec(tenantId, 1, 1), ct);
 ```
 
-**Command handler** with Unit of Work:
+**Command handler** — inject `IDataContext` and access repositories through it (like `DbContext.Set<T>()`):
 
 ```csharp
-public sealed class CreateTicketHandler
+public sealed class CreateTicketHandler(IDataContext unitOfWork)
 {
-    private readonly ITicketRepository _repository;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public CreateTicketHandler(ITicketRepository repository, IUnitOfWork unitOfWork)
-    {
-        _repository = repository;
-        _unitOfWork = unitOfWork;
-    }
-
     public async Task<Ticket> HandleAsync(CreateTicketCommand command, CancellationToken ct)
     {
+        var repo = unitOfWork.Repository<Ticket, Guid>();
         var ticket = Ticket.Create(command.TenantId, command.Title);
-        await _repository.AddAsync(ticket, ct);
-        await _unitOfWork.SaveChangesAsync(ct);
+        await repo.AddAsync(ticket, ct);
+        await unitOfWork.SaveChangesAsync(ct);
         return ticket;
     }
 }
 ```
 
+**Cross-entity operations** — all repos share the same underlying context:
+
+```csharp
+public sealed class TransferOwnershipHandler(IDataContext unitOfWork)
+{
+    public async Task HandleAsync(TransferCommand command, CancellationToken ct)
+    {
+        var tickets = unitOfWork.Repository<Ticket, Guid>();
+        var auditLogs = unitOfWork.Repository<AuditLog, Guid>();
+
+        var ticket = await tickets.GetByIdAsync(command.TicketId, ct)
+            ?? throw new NotFoundException();
+
+        ticket.TransferTo(command.NewOwnerId);
+        tickets.Update(ticket);
+
+        await auditLogs.AddAsync(
+            AuditLog.Create("OwnershipTransferred", ticket.Id), ct);
+
+        // Single SaveChanges persists both the ticket update and audit log
+        await unitOfWork.SaveChangesAsync(ct);
+    }
+}
+```
+
+> **Tip:** You can still inject `IRepository<T, TId>` or custom interfaces like `ITicketRepository`
+> directly when you prefer explicit constructor dependencies or need domain-specific repository methods.
+
 **Bulk write operations**:
 
 ```csharp
+var repo = unitOfWork.Repository<Ticket, Guid>();
+
 // Add multiple entities
-await _repository.AddRangeAsync(tickets, ct);
+await repo.AddRangeAsync(tickets, ct);
 
 // Mark entities as modified (update)
-_repository.Update(ticket);
-_repository.UpdateRange(tickets);
+repo.Update(ticket);
+repo.UpdateRange(tickets);
 
 // Remove entities
-_repository.Remove(ticket);
-_repository.RemoveRange(tickets);
+repo.Remove(ticket);
+repo.RemoveRange(tickets);
 
 // Persist all pending changes
-await _unitOfWork.SaveChangesAsync(ct);
+await unitOfWork.SaveChangesAsync(ct);
 ```
 
 ### 5. Implement the Repository (Infrastructure Layer)
@@ -239,6 +266,38 @@ services.AddDataAccess<AppDbContext>();
 services.AddRepository<ITicketRepository, TicketRepository>();
 services.AddRepository<IOrderRepository, OrderRepository>();
 ```
+
+**Option C — Source-generated registration** (recommended for NativeAOT / trimmer compatibility):
+
+Add the `Clywell.Core.Data.Generators` package to your **Infrastructure** project. The Roslyn
+generator automatically detects every concrete class that implements a repository interface derived
+from `IRepository<,>` or `IReadRepository<,>` and emits a single `AddRepositories()` extension
+method at compile time — no reflection, no assembly scanning.
+
+```bash
+dotnet add package Clywell.Core.Data.Generators
+```
+
+```csharp
+services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+services.AddDataAccess<AppDbContext>();
+services.AddRepositories(); // generated — zero reflection, NativeAOT safe
+```
+
+The generated file `RepositoryRegistrationExtensions.g.cs` is placed in your project's root
+namespace so no extra `using` directive is required. Each registration uses `TryAddScoped`,
+so you can still override individual registrations before or after calling `AddRepositories()`.
+
+> **How it works:** The generator detects any non-abstract, non-generic class whose
+> interface chain includes a user-defined sub-interface of `IRepository<,>` or
+> `IReadRepository<,>`. The base interfaces themselves are not registered directly —
+> only your domain-specific interfaces (e.g. `ITicketRepository`) are wired up.
+>
+> **What is NOT required:** You do not need `AddRepositoriesFromAssembly()` or any
+> reflection-based scan when using the generator. Both approaches are mutually exclusive —
+> pick one per project.
 
 ---
 
@@ -297,13 +356,15 @@ Before updating or deleting an entity, confirm it belongs to the current tenant:
 ```csharp
 public async Task HandleAsync(UpdateTicketCommand command, CancellationToken ct)
 {
+    var repo = _unitOfWork.Repository<Ticket, Guid>();
+
     // Fetch using a spec that combines tenant + entity ID — both must match.
     var spec = new TicketByIdForTenantSpec(_currentTenant.TenantId, command.TicketId);
-    var ticket = await _repository.FirstOrDefaultAsync(spec, ct)
+    var ticket = await repo.FirstOrDefaultAsync(spec, ct)
         ?? throw new NotFoundException($"Ticket {command.TicketId} was not found.");
 
     ticket.Update(command.Title, command.Status);
-    _repository.Update(ticket);
+    repo.Update(ticket);
     await _unitOfWork.SaveChangesAsync(ct);
 }
 ```
@@ -349,8 +410,8 @@ intent explicit and prevents accidental writes from read-only code paths:
 // Correct — read-only handler receives read-only repository
 public sealed class GetTicketsHandler(IReadRepository<Ticket, Guid> repository) { ... }
 
-// Correct — command handler receives writable repository
-public sealed class CreateTicketHandler(ITicketRepository repository, IUnitOfWork unitOfWork) { ... }
+// Correct — command handler receives unit of work (single injection)
+public sealed class CreateTicketHandler(IDataContext unitOfWork) { ... }
 ```
 
 ### Explicit Transactions
@@ -361,20 +422,22 @@ when an exception is thrown:
 ```csharp
 public async Task HandleAsync(TransferTicketsCommand command, CancellationToken ct)
 {
+    var ticketRepo = _unitOfWork.Repository<Ticket, Guid>();
+
     await using var transaction = await _unitOfWork.BeginTransactionAsync(ct);
     try
     {
-        var source = await _sourceRepository.FirstOrDefaultAsync(
+        var source = await ticketRepo.FirstOrDefaultAsync(
             new TicketByIdForTenantSpec(_currentTenant.TenantId, command.SourceId), ct)
             ?? throw new NotFoundException("Source ticket not found.");
 
-        var target = await _targetRepository.FirstOrDefaultAsync(
+        var target = await ticketRepo.FirstOrDefaultAsync(
             new TicketByIdForTenantSpec(_currentTenant.TenantId, command.TargetId), ct)
             ?? throw new NotFoundException("Target ticket not found.");
 
         source.Transfer(target);
-        _sourceRepository.Update(source);
-        _targetRepository.Update(target);
+        ticketRepo.Update(source);
+        ticketRepo.Update(target);
 
         await _unitOfWork.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
@@ -403,7 +466,7 @@ public async Task HandleAsync(TransferTicketsCommand command, CancellationToken 
 | `Specification<T, TResult>`     | Projection spec builder: extends `Specification<T>` with `Select()` |
 | `IIncludeBuilder<T, TProperty>` | Fluent builder for chaining `ThenInclude` / `ThenIncludeCollection`  |
 | `ISpecificationEvaluator`       | Pluggable spec-to-query translation                                  |
-| `IUnitOfWork`                   | `SaveChangesAsync` + `BeginTransactionAsync`                         |
+| `IDataContext`                   | `Repository<T, TId>()` + `SaveChangesAsync` + `BeginTransactionAsync` |
 | `IDataTransaction`              | `CommitAsync` + `RollbackAsync` (`IAsyncDisposable`)                 |
 
 #### `IReadRepository<TEntity, TId>` Methods
@@ -429,7 +492,7 @@ public async Task HandleAsync(TransferTicketsCommand command, CancellationToken 
 | `Remove(TEntity)` | Marks entity for deletion |
 | `RemoveRange(IEnumerable<TEntity>)` | Marks multiple entities for deletion |
 
-> **Note:** Write operations are not persisted until `IUnitOfWork.SaveChangesAsync` is called.
+> **Note:** Write operations are not persisted until `IDataContext.SaveChangesAsync` is called.
 
 #### `Specification<T>` Builder Methods
 
@@ -458,10 +521,49 @@ IncludeCollection(t => t.Comments)          // Include comments collection
 | -------------------------------- | ---------------------------------------------------- |
 | `EfReadRepository<TEntity, TId>` | Read-only EF Core repository; applies `AsNoTracking` |
 | `EfRepository<TEntity, TId>`     | Full CRUD; `GetByIdAsync` uses `FindAsync` (tracked) |
-| `EfUnitOfWork`                   | Wraps `DbContext.SaveChangesAsync`                   |
+| `EfDataContext`                   | Wraps `DbContext`; exposes repos via `Repository<>()` + `SaveChangesAsync` |
 | `EfDataTransaction`              | Wraps `IDbContextTransaction`; rolls back on dispose |
 | `EfSpecificationEvaluator`       | Translates `ISpecification` to EF Core LINQ          |
 | `ServiceCollectionExtensions`    | `AddDataAccess<TContext>`, `AddRepository<,>`, `AddRepositoriesFromAssembly`, `AddRepositoriesFromAssemblyContaining<T>` |
+
+### Clywell.Core.Data.Generators (Source Generator)
+
+| Type / Member                          | Purpose                                                                 |
+| -------------------------------------- | ----------------------------------------------------------------------- |
+| `RepositoryRegistrationGenerator`      | Roslyn incremental generator; scans the compilation for repository impls |
+| `RepositoryRegistrationExtensions` (generated) | Emitted into the consuming project's root namespace |
+| `AddRepositories(this IServiceCollection)` (generated) | Registers all detected repositories as scoped services via `TryAddScoped` |
+
+**Detection rules:**
+- Targets any non-abstract, non-generic `class` whose interface hierarchy includes a
+  user-defined sub-interface of `IRepository<,>` or `IReadRepository<,>`.
+- The base `IRepository<,>` / `IReadRepository<,>` interfaces are **not** registered directly.
+- Each registration is emitted as `TryAddScoped<IMyRepo, MyRepoImpl>()`, so manually
+  registered overrides are respected.
+
+**Generated output example** (for `TicketRepository : EfRepository<Ticket, Guid>, ITicketRepository`):
+
+```csharp
+// <auto-generated/>
+#nullable enable
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+namespace MyApp.Infrastructure
+{
+    public static class RepositoryRegistrationExtensions
+    {
+        public static IServiceCollection AddRepositories(
+            this IServiceCollection services)
+        {
+            services.TryAddScoped<global::MyApp.Domain.ITicketRepository,
+                                  global::MyApp.Infrastructure.TicketRepository>();
+            return services;
+        }
+    }
+}
+```
 
 ---
 
@@ -470,17 +572,17 @@ IncludeCollection(t => t.Comments)          // Include comments collection
 ```
 ┌─────────────────────────────────────────────┐
 │  Application Layer                          │
-│  ┌─────────────────────────────────────┐    │
-│  │  References: Clywell.Core.Data      │    │
-│  │  Uses: IRepository, Specification,  │    │
-│  │        IUnitOfWork, IDataTransaction │    │
-│  │  NO EF Core dependency              │    │
-│  └─────────────────────────────────────┘    │
+│  ┌───────────────────────────────────────┐  │
+│  │  References: Clywell.Core.Data        │  │
+│  │  Uses: IRepository, Specification,    │  │
+│  │        IDataContext, IDataTransaction │  │
+│  │  NO EF Core dependency                │  │
+│  └───────────────────────────────────────┘  │
 ├─────────────────────────────────────────────┤
 │  Infrastructure Layer                       │
 │  ┌─────────────────────────────────────┐    │
 │  │  References: Clywell.Core.Data.EF   │    │
-│  │  Uses: EfRepository, EfUnitOfWork,  │    │
+│  │  Uses: EfRepository, EfDataContext, │    │
 │  │        DbContext, EF Core           │    │
 │  └─────────────────────────────────────┘    │
 └─────────────────────────────────────────────┘
@@ -490,6 +592,7 @@ IncludeCollection(t => t.Comments)          // Include comments collection
 
 - **Clywell.Core.Data:** `Clywell.Primitives` only
 - **Clywell.Core.Data.EntityFramework:** `Clywell.Core.Data` + `Microsoft.EntityFrameworkCore` + `Microsoft.EntityFrameworkCore.Relational`
+- **Clywell.Core.Data.Generators:** `Microsoft.CodeAnalysis.CSharp` (build-time only; `DevelopmentDependency = true`, no runtime footprint)
 
 ## Contributing
 

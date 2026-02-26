@@ -3,9 +3,11 @@
     <PropertyGroup>
         <!-- Package Identity -->
         <PackageId>Clywell.Core.Data.EntityFramework</PackageId>
-        <Description>EF Core implementation of Clywell.Core.Data abstractions — repository base classes,
+        <Description>EF Core implementation of Clywell.Core.Data abstractions — repository base
+            classes,
             specification evaluator, unit of work, and DI registration extensions.</Description>
-        <PackageTags>clywell;entity-framework;ef-core;repository-pattern;data-access;clean-architecture</PackageTags>
+        <PackageTags>
+            clywell;entity-framework;ef-core;repository-pattern;data-access;clean-architecture</PackageTags>
 
         <!-- URLs -->
         <PackageProjectUrl>https://github.com/clywell/clywell-core</PackageProjectUrl>
@@ -25,7 +27,13 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     </ItemGroup>
-
+    <!-- Source generator — bundled as analyzer so consumers get compile-time DI registration -->
+    <ItemGroup>
+        <ProjectReference
+            Include="..\Clywell.Core.Data.Generators\Clywell.Core.Data.Generators.csproj"
+            OutputItemType="Analyzer"
+            ReferenceOutputAssembly="false" />
+    </ItemGroup>
     <!-- Versioning -->
     <ItemGroup>
         <PackageReference Include="Nerdbank.GitVersioning">

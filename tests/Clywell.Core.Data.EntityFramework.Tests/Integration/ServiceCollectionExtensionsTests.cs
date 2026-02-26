@@ -17,10 +17,10 @@ public class ServiceCollectionExtensionsTests
         services.AddDataAccess<TestDbContext>();
 
         using var provider = services.BuildServiceProvider();
-        var uow = provider.GetService<IUnitOfWork>();
+        var uow = provider.GetService<IDataContext>();
 
         Assert.NotNull(uow);
-        Assert.IsType<EfUnitOfWork>(uow);
+        Assert.IsType<EfDataContext>(uow);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class ServiceCollectionExtensionsTests
         services.AddDataAccess<TestDbContext>();
         services.AddDataAccess<TestDbContext>(); // Second call
 
-        var uowRegistrations = services.Where(s => s.ServiceType == typeof(IUnitOfWork)).ToList();
+        var uowRegistrations = services.Where(s => s.ServiceType == typeof(IDataContext)).ToList();
         Assert.Single(uowRegistrations);
     }
 
