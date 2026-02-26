@@ -1,6 +1,5 @@
 # Clywell.Core.Data & Clywell.Core.Data.EntityFramework
 
-[![Build Status](https://github.com/clywell/clywell-core/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/clywell/clywell-core/actions/workflows/ci-cd.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![NuGet: Clywell.Core.Data](https://img.shields.io/nuget/v/Clywell.Core.Data?logo=nuget)](https://www.nuget.org/packages/Clywell.Core.Data/)
 [![NuGet: Clywell.Core.Data.EntityFramework](https://img.shields.io/nuget/v/Clywell.Core.Data.EntityFramework?logo=nuget)](https://www.nuget.org/packages/Clywell.Core.Data.EntityFramework/)
