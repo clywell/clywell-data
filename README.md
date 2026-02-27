@@ -590,11 +590,13 @@ namespace MyApp.Infrastructure
 └─────────────────────────────────────────────┘
 ```
 
-## Dependencies
+## Contributing
 
-- **Clywell.Core.Data:** `Clywell.Primitives` only
-- **Clywell.Core.Data.EntityFramework:** `Clywell.Core.Data` + `Microsoft.EntityFrameworkCore` + `Microsoft.EntityFrameworkCore.Relational`
-- **Clywell.Core.Data.Generators:** `Microsoft.CodeAnalysis.CSharp` (build-time only; `DevelopmentDependency = true`, no runtime footprint)
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit changes: `git commit -m 'feat: add my feature'`
+4. Push to branch: `git push origin feature/my-feature`
+5. Create a Pull Request
 
 ## License
 
