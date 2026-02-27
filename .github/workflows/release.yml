@@ -54,7 +54,7 @@ jobs:
             --filter "FullyQualifiedName!~Postgres"
 
   # ============================================================
-  # Package — both Clywell.Core.Data and Clywell.Core.Data.EntityFramework
+  # Package — Clywell.Core.Data and Clywell.Core.Data.EntityFramework (includes generator)
   # ============================================================
   package:
     runs-on: ubuntu-latest
@@ -96,17 +96,6 @@ jobs:
             -o ./artifacts \
             src/Clywell.Core.Data.EntityFramework/Clywell.Core.Data.EntityFramework.csproj
           echo "✓ Clywell.Core.Data.EntityFramework packed"
-
-      - name: Pack Clywell.Core.Data.Generators
-        run: |
-          dotnet pack \
-            -c ${{ env.BUILD_CONFIGURATION }} \
-            --no-restore \
-            -p:Version=${{ needs.validate-build.outputs.version }} \
-            -p:PackageVersion=${{ needs.validate-build.outputs.version }} \
-            -o ./artifacts \
-            src/Clywell.Core.Data.Generators/Clywell.Core.Data.Generators.csproj
-          echo "✓ Clywell.Core.Data.Generators packed"
 
       - name: List packages
         run: |
@@ -182,8 +171,7 @@ jobs:
 
             ### Release Artifacts
             - `Clywell.Core.Data.${{ needs.validate-build.outputs.version }}.nupkg` — Abstractions (no EF Core dependency)
-            - `Clywell.Core.Data.EntityFramework.${{ needs.validate-build.outputs.version }}.nupkg` — EF Core implementation
-            - `Clywell.Core.Data.Generators.${{ needs.validate-build.outputs.version }}.nupkg` — Roslyn source generator (compile-time DI registration, NativeAOT compatible)
+            - `Clywell.Core.Data.EntityFramework.${{ needs.validate-build.outputs.version }}.nupkg` — EF Core implementation (includes bundled source generator)
 
             ### What's Changed
             Please review the commit history and CHANGELOG for details on changes in this release.
@@ -195,14 +183,9 @@ jobs:
             dotnet add package Clywell.Core.Data --version ${{ needs.validate-build.outputs.version }}
             ```
 
-            **Infrastructure layer (EF Core implementation):**
+            **Infrastructure layer (EF Core implementation + source generator):**
             ```
             dotnet add package Clywell.Core.Data.EntityFramework --version ${{ needs.validate-build.outputs.version }}
-            ```
-
-            **Source generator — compile-time DI registration (optional, recommended for NativeAOT):**
-            ```
-            dotnet add package Clywell.Core.Data.Generators --version ${{ needs.validate-build.outputs.version }}
             ```
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

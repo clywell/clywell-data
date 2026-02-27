@@ -28,6 +28,10 @@
         <!-- Generators have no runtime footprint -->
         <DevelopmentDependency>true</DevelopmentDependency>
         <IncludeBuildOutput>false</IncludeBuildOutput>
+
+        <!-- Bundled inside Clywell.Core.Data.EntityFramework — not published as a standalone
+        package -->
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>

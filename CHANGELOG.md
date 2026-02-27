@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-02-27
+
+### Changed
+
+#### `Clywell.Core.Data.EntityFramework`
+- Source generator (`RepositoryRegistrationGenerator`) is no longer published as a separate `Clywell.Core.Data.Generators` NuGet package — it is bundled inside `Clywell.Core.Data.EntityFramework` and activated automatically; no separate package install or project reference is required
+
 ## [1.0.0] - 2026-02-26
 
 ### Added
@@ -44,5 +51,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No runtime dependency; `DevelopmentDependency = true` means the package does not appear in consuming projects' dependency graphs
 - Replaces `AddRepositoriesFromAssembly()` / `AddRepositoriesFromAssemblyContaining<T>()` for projects that require AOT or trim compatibility
 
-[Unreleased]: https://github.com/clywell/clywell-core/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/clywell/clywell-core/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/clywell/clywell-core/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/clywell/clywell-core/releases/tag/v1.0.0
