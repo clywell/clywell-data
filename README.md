@@ -3,19 +3,17 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![NuGet: Clywell.Core.Data](https://img.shields.io/nuget/v/Clywell.Core.Data?logo=nuget)](https://www.nuget.org/packages/Clywell.Core.Data/)
 [![NuGet: Clywell.Core.Data.EntityFramework](https://img.shields.io/nuget/v/Clywell.Core.Data.EntityFramework?logo=nuget)](https://www.nuget.org/packages/Clywell.Core.Data.EntityFramework/)
-[![NuGet: Clywell.Core.Data.Generators](https://img.shields.io/nuget/v/Clywell.Core.Data.Generators?logo=nuget)](https://www.nuget.org/packages/Clywell.Core.Data.Generators/)
 
 Data access abstractions and EF Core implementation for clean architecture .NET applications.
 
 ## Overview
 
-This solution provides three NuGet packages that enforce clean architecture by separating data access abstractions from their EF Core implementation, with optional source-generated compile-time DI:
+This solution provides two NuGet packages that enforce clean architecture by separating data access abstractions from their EF Core implementation:
 
 | Package                               | Link | Purpose                                              | EF Core Dependency |
 | ------------------------------------- | ---- | ---------------------------------------------------- | ------------------ |
 | **Clywell.Core.Data**                 | [![NuGet](https://img.shields.io/nuget/v/Clywell.Core.Data?style=flat-square)](https://www.nuget.org/packages/Clywell.Core.Data/) | Interfaces, specifications, and query abstractions   | **None**           |
-| **Clywell.Core.Data.EntityFramework** | [![NuGet](https://img.shields.io/nuget/v/Clywell.Core.Data.EntityFramework?style=flat-square)](https://www.nuget.org/packages/Clywell.Core.Data.EntityFramework/) | EF Core implementations of all abstractions          | **Yes**            |
-| **Clywell.Core.Data.Generators**      | [![NuGet](https://img.shields.io/nuget/v/Clywell.Core.Data.Generators?style=flat-square)](https://www.nuget.org/packages/Clywell.Core.Data.Generators/) | Roslyn source generator — emits compile-time `AddRepositories()` DI extension, replacing reflection-based assembly scanning | **None** |
+| **Clywell.Core.Data.EntityFramework** | [![NuGet](https://img.shields.io/nuget/v/Clywell.Core.Data.EntityFramework?style=flat-square)](https://www.nuget.org/packages/Clywell.Core.Data.EntityFramework/) | EF Core implementations of all abstractions — includes bundled source generator for compile-time DI registration         | **Yes**            |
 
 Your **Application layer** references only `Clywell.Core.Data` → zero EF Core dependency.  
 Your **Infrastructure layer** references `Clywell.Core.Data.EntityFramework` → provides the implementations.
@@ -28,8 +26,7 @@ Your **Infrastructure layer** references `Clywell.Core.Data.EntityFramework` →
 - **Eager Loading** — Strongly-typed `Include` / `ThenInclude` builder with collection support
 - **Unit of Work** — `IDataContext` with `Repository<T, TId>()` (like `DbContext.Set<T>()`), `SaveChangesAsync`, and `BeginTransactionAsync` — single injection for command handlers
 - **Explicit Transactions** — `IDataTransaction` with `CommitAsync` / `RollbackAsync` and `IAsyncDisposable`
-- **DI Registration** — `AddDataAccess<TContext>()`, `AddRepository<TInterface, TImpl>()`, and `AddRepositoriesFromAssembly()` for auto-scanning
-- **Source Generator** — `Clywell.Core.Data.Generators` emits a compile-time `AddRepositories()` method — zero reflection, NativeAOT and trimmer compatible
+- **DI Registration** — `AddDataAccess<TContext>()`, `AddRepository<TInterface, TImpl>()`, and `AddRepositoriesFromAssembly()` for auto-scanning, or source-generated `AddRepositories()` for compile-time registration (NativeAOT/trimmer compatible)
 
 ## Installation
 
@@ -37,11 +34,8 @@ Your **Infrastructure layer** references `Clywell.Core.Data.EntityFramework` →
 # Application layer (abstractions only)
 dotnet add package Clywell.Core.Data
 
-# Infrastructure layer (EF Core implementation)
+# Infrastructure layer (EF Core implementation + bundled source generator)
 dotnet add package Clywell.Core.Data.EntityFramework
-
-# Source generator — compile-time DI registration (recommended, optional)
-dotnet add package Clywell.Core.Data.Generators
 ```
 
 ## Quick Start
@@ -269,37 +263,23 @@ services.AddRepository<ITicketRepository, TicketRepository>();
 services.AddRepository<IOrderRepository, OrderRepository>();
 ```
 
-**Option C — Source-generated registration** (recommended for NativeAOT / trimmer compatibility):
+**Option C — Source-generated registration** (automatic; recommended for NativeAOT / trimmer compatibility):
 
-Add the `Clywell.Core.Data.Generators` package to your **Infrastructure** project. The Roslyn
-generator automatically detects every concrete class that implements a repository interface derived
-from `IRepository<,>` or `IReadRepository<,>` and emits a single `AddRepositories()` extension
-method at compile time — no reflection, no assembly scanning.
-
-```bash
-dotnet add package Clywell.Core.Data.Generators
-```
+When you reference `Clywell.Core.Data.EntityFramework`, the bundled Roslyn generator automatically detects every concrete class that implements a repository interface derived from `IRepository<,>` or `IReadRepository<,>` at build time and emits a single `AddRepositories()` extension method — zero reflection, zero assembly scanning.
 
 ```csharp
 services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 services.AddDataAccess<AppDbContext>();
-services.AddRepositories(); // generated — zero reflection, NativeAOT safe
+services.AddRepositories(); // generated automatically — zero reflection, NativeAOT safe
 ```
 
-The generated file `RepositoryRegistrationExtensions.g.cs` is placed in your project's root
-namespace so no extra `using` directive is required. Each registration uses `TryAddScoped`,
-so you can still override individual registrations before or after calling `AddRepositories()`.
+The generated file `RepositoryRegistrationExtensions.g.cs` is placed in your project's root namespace so no extra `using` directive is required. Each registration uses `TryAddScoped`, so you can still override individual registrations before or after calling `AddRepositories()`.
 
-> **How it works:** The generator detects any non-abstract, non-generic class whose
-> interface chain includes a user-defined sub-interface of `IRepository<,>` or
-> `IReadRepository<,>`. The base interfaces themselves are not registered directly —
-> only your domain-specific interfaces (e.g. `ITicketRepository`) are wired up.
+> **How it works:** The generator detects any non-abstract, non-generic class whose interface chain includes a user-defined sub-interface of `IRepository<,>` or `IReadRepository<,>`. The base interfaces themselves are not registered directly — only your domain-specific interfaces (e.g. `ITicketRepository`) are wired up.
 >
-> **What is NOT required:** You do not need `AddRepositoriesFromAssembly()` or any
-> reflection-based scan when using the generator. Both approaches are mutually exclusive —
-> pick one per project.
+> **What is NOT required:** You do not need `AddRepositoriesFromAssembly()` or any reflection-based scan when using the generator. Both approaches are mutually exclusive — pick one per project. No separate package install is needed; the generator is bundled inside `Clywell.Core.Data.EntityFramework`.
 
 ---
 
@@ -528,44 +508,9 @@ IncludeCollection(t => t.Comments)          // Include comments collection
 | `EfSpecificationEvaluator`       | Translates `ISpecification` to EF Core LINQ          |
 | `ServiceCollectionExtensions`    | `AddDataAccess<TContext>`, `AddRepository<,>`, `AddRepositoriesFromAssembly`, `AddRepositoriesFromAssemblyContaining<T>` |
 
-### Clywell.Core.Data.Generators (Source Generator)
+**Source Generator (bundled in EntityFramework):**
 
-| Type / Member                          | Purpose                                                                 |
-| -------------------------------------- | ----------------------------------------------------------------------- |
-| `RepositoryRegistrationGenerator`      | Roslyn incremental generator; scans the compilation for repository impls |
-| `RepositoryRegistrationExtensions` (generated) | Emitted into the consuming project's root namespace |
-| `AddRepositories(this IServiceCollection)` (generated) | Registers all detected repositories as scoped services via `TryAddScoped` |
-
-**Detection rules:**
-- Targets any non-abstract, non-generic `class` whose interface hierarchy includes a
-  user-defined sub-interface of `IRepository<,>` or `IReadRepository<,>`.
-- The base `IRepository<,>` / `IReadRepository<,>` interfaces are **not** registered directly.
-- Each registration is emitted as `TryAddScoped<IMyRepo, MyRepoImpl>()`, so manually
-  registered overrides are respected.
-
-**Generated output example** (for `TicketRepository : EfRepository<Ticket, Guid>, ITicketRepository`):
-
-```csharp
-// <auto-generated/>
-#nullable enable
-
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-
-namespace MyApp.Infrastructure
-{
-    public static class RepositoryRegistrationExtensions
-    {
-        public static IServiceCollection AddRepositories(
-            this IServiceCollection services)
-        {
-            services.TryAddScoped<global::MyApp.Domain.ITicketRepository,
-                                  global::MyApp.Infrastructure.TicketRepository>();
-            return services;
-        }
-    }
-}
-```
+The Roslyn source generator (`RepositoryRegistrationGenerator`) is bundled inside `Clywell.Core.Data.EntityFramework` and automatically emits a compile-time `RepositoryRegistrationExtensions` class at build time. It detects all repository implementations in the consuming project and emits an `AddRepositories()` extension method that registers them as scoped services — zero reflection, NativeAOT and trimmer compatible.
 
 ---
 
