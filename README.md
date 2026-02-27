@@ -596,10 +596,6 @@ namespace MyApp.Infrastructure
 - **Clywell.Core.Data.EntityFramework:** `Clywell.Core.Data` + `Microsoft.EntityFrameworkCore` + `Microsoft.EntityFrameworkCore.Relational`
 - **Clywell.Core.Data.Generators:** `Microsoft.CodeAnalysis.CSharp` (build-time only; `DevelopmentDependency = true`, no runtime footprint)
 
-## Contributing
-
-See the [getting started guide](docs/getting-started.md) for development setup.
-
 ## License
 
 MIT © 2026 Clywell
