@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-02-28
+
+### Added
+
+#### `Clywell.Core.Data` (Abstractions)
+- `IAuditable` — entity marker interface capturing `CreatedAt`, `CreatedBy`, `UpdatedAt`, and `UpdatedBy`; populated automatically by the EF Core save interceptor in the Infrastructure layer
+- `ITenantScoped` — entity marker interface exposing `TenantId`; the Infrastructure layer applies a global EF Core query filter to enforce tenant data isolation
+- `ISoftDeletable` — entity marker interface exposing `IsDeleted`, `DeletedAt`, and `DeletedBy`; the Infrastructure layer applies a global EF Core query filter that excludes soft-deleted records from normal queries
+
 ## [1.0.1] - 2026-02-27
 
 ### Changed
