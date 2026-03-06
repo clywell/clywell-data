@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-03-06
+
+### Breaking Changes
+
+#### `Clywell.Core.Data` (Abstractions)
+- `IReadRepository<TEntity, TId>` is now `IReadRepository<TEntity>` — the `TId` generic parameter has been removed; `GetByIdAsync` now accepts `object id` instead of a typed `TId id`
+- `IRepository<TEntity, TId>` is now `IRepository<TEntity>` — the `TId` generic parameter has been removed
+- `IDataContext.Repository<TEntity, TId>()` is now `IDataContext.Repository<TEntity>()` — callers no longer need to supply the entity ID type; specifying the entity type alone is sufficient
+
+#### `Clywell.Core.Data.EntityFramework` (EF Core Implementation)
+- `EfReadRepository<TEntity, TId>` is now `EfReadRepository<TEntity>` — the `TId` generic parameter has been removed
+- `EfRepository<TEntity, TId>` is now `EfRepository<TEntity>` — the `TId` generic parameter has been removed
+
+### Changed
+
+#### `Clywell.Core.Data.EntityFramework` (EF Core Implementation)
+- `EfReadRepository.GetByIdAsync` now uses `DbContext.FindAsync<TEntity>([id])` with a subsequent detach to preserve no-tracking semantics, replacing the previous `FirstOrDefaultAsync(e => e.Id.Equals(id))` approach — improves performance by resolving from the identity map before issuing a database query
+
+### Migration Guide
+
+Replace all two-argument repository generic usages with single-argument equivalents:
+
+| Before | After |
+|--------|-------|
+| `IRepository<Order, Guid>` | `IRepository<Order>` |
+| `IReadRepository<Order, Guid>` | `IReadRepository<Order>` |
+| `EfRepository<Order, Guid>` | `EfRepository<Order>` |
+| `EfReadRepository<Order, Guid>` | `EfReadRepository<Order>` |
+| `dataContext.Repository<Order, Guid>()` | `dataContext.Repository<Order>()` |
+| `GetByIdAsync(id)` (typed `TId`) | `GetByIdAsync(id)` (`object` — passes transparently, no cast needed for `Guid`, `int`, etc.) |
+
 ## [1.1.0] - 2026-02-28
 
 ### Added
@@ -60,6 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No runtime dependency; `DevelopmentDependency = true` means the package does not appear in consuming projects' dependency graphs
 - Replaces `AddRepositoriesFromAssembly()` / `AddRepositoriesFromAssemblyContaining<T>()` for projects that require AOT or trim compatibility
 
-[Unreleased]: https://github.com/clywell/clywell-core/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/clywell/clywell-core/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/clywell/clywell-core/compare/v1.1.0...v2.0.0
+[1.1.0]: https://github.com/clywell/clywell-core/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/clywell/clywell-core/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/clywell/clywell-core/releases/tag/v1.0.0

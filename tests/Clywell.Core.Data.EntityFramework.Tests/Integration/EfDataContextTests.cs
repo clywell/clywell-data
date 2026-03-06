@@ -129,17 +129,17 @@ public abstract class EfDataContextTests : IAsyncLifetime
     [Fact]
     public void Repository_ShouldReturnRepositoryInstance()
     {
-        var repo = _dataContext.Repository<TestEntity, Guid>();
+        var repo = _dataContext.Repository<TestEntity>();
 
         Assert.NotNull(repo);
-        Assert.IsAssignableFrom<IRepository<TestEntity, Guid>>(repo);
+        Assert.IsAssignableFrom<IRepository<TestEntity>>(repo);
     }
 
     [Fact]
     public void Repository_SameEntity_ShouldReturnCachedInstance()
     {
-        var repo1 = _dataContext.Repository<TestEntity, Guid>();
-        var repo2 = _dataContext.Repository<TestEntity, Guid>();
+        var repo1 = _dataContext.Repository<TestEntity>();
+        var repo2 = _dataContext.Repository<TestEntity>();
 
         Assert.Same(repo1, repo2);
     }
@@ -147,8 +147,8 @@ public abstract class EfDataContextTests : IAsyncLifetime
     [Fact]
     public void Repository_DifferentEntities_ShouldReturnDifferentInstances()
     {
-        var entityRepo = _dataContext.Repository<TestEntity, Guid>();
-        var categoryRepo = _dataContext.Repository<TestCategory, Guid>();
+        var entityRepo = _dataContext.Repository<TestEntity>();
+        var categoryRepo = _dataContext.Repository<TestCategory>();
 
         Assert.NotSame(entityRepo, categoryRepo);
     }
@@ -156,7 +156,7 @@ public abstract class EfDataContextTests : IAsyncLifetime
     [Fact]
     public async Task Repository_AddAndSave_ShouldPersist()
     {
-        var repo = _dataContext.Repository<TestEntity, Guid>();
+        var repo = _dataContext.Repository<TestEntity>();
         var entity = new TestEntity
         {
             Id = Guid.NewGuid(),
@@ -176,8 +176,8 @@ public abstract class EfDataContextTests : IAsyncLifetime
     [Fact]
     public async Task Repository_CrossEntityOperations_ShouldPersistAtomically()
     {
-        var entityRepo = _dataContext.Repository<TestEntity, Guid>();
-        var categoryRepo = _dataContext.Repository<TestCategory, Guid>();
+        var entityRepo = _dataContext.Repository<TestEntity>();
+        var categoryRepo = _dataContext.Repository<TestCategory>();
 
         var categoryId = Guid.NewGuid();
         await categoryRepo.AddAsync(new TestCategory { Id = categoryId, Name = "Cat1" });

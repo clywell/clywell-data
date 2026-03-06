@@ -16,7 +16,7 @@ namespace Clywell.Core.Data.Generators;
 /// <remarks>
 /// <para>
 /// The generator detects any non-abstract class whose interface hierarchy includes
-/// <c>Clywell.Core.Data.IRepository&lt;,&gt;</c> or <c>Clywell.Core.Data.IReadRepository&lt;,&gt;</c>
+/// <c>Clywell.Core.Data.IRepository&lt;&gt;</c> or <c>Clywell.Core.Data.IReadRepository&lt;&gt;</c>
 /// and emits the corresponding <c>TryAddScoped</c> registrations at compile time.
 /// </para>
 /// <para>
@@ -35,8 +35,8 @@ namespace Clywell.Core.Data.Generators;
 [Generator]
 public sealed class RepositoryRegistrationGenerator : IIncrementalGenerator
 {
-    private const string IRepositoryMetadataName = "Clywell.Core.Data.IRepository`2";
-    private const string IReadRepositoryMetadataName = "Clywell.Core.Data.IReadRepository`2";
+    private const string IRepositoryMetadataName = "Clywell.Core.Data.IRepository`1";
+    private const string IReadRepositoryMetadataName = "Clywell.Core.Data.IReadRepository`1";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -113,7 +113,7 @@ public sealed class RepositoryRegistrationGenerator : IIncrementalGenerator
                 || SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, bases.IReadRepository))
                 continue;
 
-            // The interface must itself inherit from IRepository<,> or IReadRepository<,>
+            // The interface must itself inherit from IRepository<> or IReadRepository<>
             if (!IsRepositoryInterface(iface, bases))
                 continue;
 

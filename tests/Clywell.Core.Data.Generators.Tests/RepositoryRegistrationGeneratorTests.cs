@@ -27,7 +27,7 @@ public sealed class RepositoryRegistrationGeneratorTests
         {
             MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
             MetadataReference.CreateFromFile(Assembly.Load("System.Runtime").Location),
-            MetadataReference.CreateFromFile(typeof(Clywell.Core.Data.IRepository<,>).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(Clywell.Core.Data.IRepository<>).Assembly.Location),
         };
 
         var compilation = CSharpCompilation.Create(
@@ -79,14 +79,13 @@ public sealed class RepositoryRegistrationGeneratorTests
                     public System.Guid Id { get; set; }
                 }
 
-                public interface IOrderRepository : IRepository<Order, System.Guid> { }
+                public interface IOrderRepository : IRepository<Order> { }
 
-                public sealed class OrderRepository : EfRepositoryStub<Order, System.Guid>, IOrderRepository { }
+                public sealed class OrderRepository : EfRepositoryStub<Order>, IOrderRepository { }
 
                 // Minimal stub so the class compiles in isolation
-                public class EfRepositoryStub<TEntity, TId>
-                    where TEntity : class, IEntity<TId>
-                    where TId : notnull { }
+                public class EfRepositoryStub<TEntity>
+                    where TEntity : class { }
             }
             """;
 
@@ -109,13 +108,13 @@ public sealed class RepositoryRegistrationGeneratorTests
                 public class Order : IEntity<System.Guid> { public System.Guid Id { get; set; } }
                 public class Ticket : IEntity<System.Guid> { public System.Guid Id { get; set; } }
 
-                public interface IOrderRepository : IRepository<Order, System.Guid> { }
-                public interface ITicketRepository : IRepository<Ticket, System.Guid> { }
+                public interface IOrderRepository : IRepository<Order> { }
+                public interface ITicketRepository : IRepository<Ticket> { }
 
-                public sealed class OrderRepository : Stub<Order, System.Guid>, IOrderRepository { }
-                public sealed class TicketRepository : Stub<Ticket, System.Guid>, ITicketRepository { }
+                public sealed class OrderRepository : Stub<Order>, IOrderRepository { }
+                public sealed class TicketRepository : Stub<Ticket>, ITicketRepository { }
 
-                public class Stub<T, TId> where T : class, IEntity<TId> where TId : notnull { }
+                public class Stub<T> where T : class { }
             }
             """;
 
@@ -138,11 +137,11 @@ public sealed class RepositoryRegistrationGeneratorTests
             {
                 public class Report : IEntity<System.Guid> { public System.Guid Id { get; set; } }
 
-                public interface IReportRepository : IReadRepository<Report, System.Guid> { }
+                public interface IReportRepository : IReadRepository<Report> { }
 
-                public sealed class ReportRepository : ReadStub<Report, System.Guid>, IReportRepository { }
+                public sealed class ReportRepository : ReadStub<Report>, IReportRepository { }
 
-                public class ReadStub<T, TId> where T : class, IEntity<TId> where TId : notnull { }
+                public class ReadStub<T> where T : class { }
             }
             """;
 
@@ -162,11 +161,11 @@ public sealed class RepositoryRegistrationGeneratorTests
             namespace MyApp
             {
                 public class Order : IEntity<System.Guid> { public System.Guid Id { get; set; } }
-                public interface IOrderRepository : IRepository<Order, System.Guid> { }
+                public interface IOrderRepository : IRepository<Order> { }
 
-                public abstract class BaseOrderRepository : Stub<Order, System.Guid>, IOrderRepository { }
+                public abstract class BaseOrderRepository : Stub<Order>, IOrderRepository { }
 
-                public class Stub<T, TId> where T : class, IEntity<TId> where TId : notnull { }
+                public class Stub<T> where T : class { }
             }
             """;
 
@@ -185,9 +184,9 @@ public sealed class RepositoryRegistrationGeneratorTests
             namespace MyApp
             {
                 public class Order : IEntity<System.Guid> { public System.Guid Id { get; set; } }
-                public interface IOrderRepository : IRepository<Order, System.Guid> { }
-                public sealed class OrderRepository : Stub<Order, System.Guid>, IOrderRepository { }
-                public class Stub<T, TId> where T : class, IEntity<TId> where TId : notnull { }
+                public interface IOrderRepository : IRepository<Order> { }
+                public sealed class OrderRepository : Stub<Order>, IOrderRepository { }
+                public class Stub<T> where T : class { }
             }
             """;
 
@@ -207,9 +206,9 @@ public sealed class RepositoryRegistrationGeneratorTests
             namespace MyApp
             {
                 public class Order : IEntity<System.Guid> { public System.Guid Id { get; set; } }
-                public interface IOrderRepository : IRepository<Order, System.Guid> { }
-                public sealed class OrderRepository : Stub<Order, System.Guid>, IOrderRepository { }
-                public class Stub<T, TId> where T : class, IEntity<TId> where TId : notnull { }
+                public interface IOrderRepository : IRepository<Order> { }
+                public sealed class OrderRepository : Stub<Order>, IOrderRepository { }
+                public class Stub<T> where T : class { }
             }
             """;
 

@@ -6,7 +6,7 @@ namespace Clywell.Core.Data;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Use <see cref="Repository{TEntity, TId}"/> to obtain a repository for any entity type
+/// Use <see cref="Repository{TEntity}"/> to obtain a repository for any entity type
 /// (similar to <c>DbContext.Set&lt;T&gt;()</c>), then call <see cref="SaveChangesAsync"/>
 /// to persist all pending changes atomically.
 /// </para>
@@ -20,7 +20,7 @@ namespace Clywell.Core.Data;
 /// {
 ///     public async Task Handle(CreateOrderCommand command, CancellationToken ct)
 ///     {
-///         var repo = dataContext.Repository&lt;Order, Guid&gt;();
+///         var repo = dataContext.Repository&lt;Order&gt;();
 ///         await repo.AddAsync(new Order(command.CustomerId), ct);
 ///         await dataContext.SaveChangesAsync(ct);
 ///     }
@@ -34,11 +34,9 @@ public interface IDataContext
     /// Gets a repository for the specified entity type, analogous to <c>DbContext.Set&lt;T&gt;()</c>.
     /// </summary>
     /// <typeparam name="TEntity">The entity type.</typeparam>
-    /// <typeparam name="TId">The entity's identifier type.</typeparam>
     /// <returns>A repository instance scoped to this unit of work.</returns>
-    IRepository<TEntity, TId> Repository<TEntity, TId>()
-        where TEntity : class, IEntity<TId>
-        where TId : notnull;
+    IRepository<TEntity> Repository<TEntity>()
+        where TEntity : class;
 
     /// <summary>
     /// Persists all pending changes to the underlying data store.

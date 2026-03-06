@@ -6,14 +6,14 @@ namespace Clywell.Core.Data.EntityFramework.Tests.Integration;
 public abstract class EfSpecificationEvaluatorTests : IAsyncLifetime
 {
     private TestDbContext _context = null!;
-    private EfRepository<TestEntity, Guid> _repository = null!;
+    private EfRepository<TestEntity> _repository = null!;
 
     protected abstract TestDbContext CreateContext();
 
     public Task InitializeAsync()
     {
         _context = CreateContext();
-        _repository = new EfRepository<TestEntity, Guid>(_context);
+        _repository = new EfRepository<TestEntity>(_context);
         SeedTestData();
         return Task.CompletedTask;
     }
@@ -267,7 +267,7 @@ public abstract class EfSpecificationEvaluatorTests : IAsyncLifetime
     [Fact]
     public async Task ListAsync_WithStringInclude_ShouldLoadRelated()
     {
-        var categoryRepo = new EfRepository<TestEntity, Guid>(_context);
+        var categoryRepo = new EfRepository<TestEntity>(_context);
         var spec = new WithCategorySpec();
 
         var results = await categoryRepo.ListAsync(spec);
@@ -281,7 +281,7 @@ public abstract class EfSpecificationEvaluatorTests : IAsyncLifetime
     [Fact]
     public async Task ListAsync_WithThenInclude_ShouldLoadNestedRelated()
     {
-        var categoryRepo = new EfRepository<TestCategory, Guid>(_context);
+        var categoryRepo = new EfRepository<TestCategory>(_context);
         var spec = new WithCategoryEntitiesSpec();
 
         var results = await categoryRepo.ListAsync(spec);

@@ -67,7 +67,7 @@ public static class ServiceCollectionExtensions
     /// <para>
     /// A type is considered a repository implementation if it is a non-abstract, non-generic
     /// class that implements at least one interface assignable to
-    /// <see cref="IReadRepository{TEntity, TId}"/> or <see cref="IRepository{TEntity, TId}"/>.
+    /// <see cref="IReadRepository{TEntity}"/> or <see cref="IRepository{TEntity}"/>.
     /// </para>
     /// <para>
     /// Each matching interface is registered as a scoped service. Existing registrations
@@ -121,13 +121,13 @@ public static class ServiceCollectionExtensions
         if (type.IsGenericType)
         {
             var def = type.GetGenericTypeDefinition();
-            if (def == typeof(IReadRepository<,>) || def == typeof(IRepository<,>))
+            if (def == typeof(IReadRepository<>) || def == typeof(IRepository<>))
                 return true;
         }
 
         return type.GetInterfaces().Any(i =>
             i.IsGenericType &&
             i.GetGenericTypeDefinition() is var g &&
-            (g == typeof(IReadRepository<,>) || g == typeof(IRepository<,>)));
+            (g == typeof(IReadRepository<>) || g == typeof(IRepository<>)));
     }
 }

@@ -1,10 +1,9 @@
 namespace Clywell.Core.Data.EntityFramework;
 
 /// <summary>
-/// EF Core implementation of <see cref="IReadRepository{TEntity, TId}"/>.
+/// EF Core implementation of <see cref="IReadRepository{TEntity}"/>.
 /// </summary>
 /// <typeparam name="TEntity">The entity type.</typeparam>
-/// <typeparam name="TId">The entity's identifier type.</typeparam>
 /// <remarks>
 /// <para>
 /// Provides read-only data access backed by an EF Core <see cref="DbContext"/>.
@@ -19,19 +18,18 @@ namespace Clywell.Core.Data.EntityFramework;
 /// </para>
 /// </remarks>
 /// <remarks>
-/// Initializes a new instance of the <see cref="EfReadRepository{TEntity, TId}"/> class.
+/// Initializes a new instance of the <see cref="EfReadRepository{TEntity}"/> class.
 /// </remarks>
 /// <param name="dbContext">The EF Core database context.</param>
 /// <param name="specificationEvaluator">The specification evaluator for translating specs to LINQ.</param>
-public class EfReadRepository<TEntity, TId>(DbContext dbContext, ISpecificationEvaluator specificationEvaluator) : IReadRepository<TEntity, TId>
-    where TEntity : class, IEntity<TId>
-    where TId : notnull
+public class EfReadRepository<TEntity>(DbContext dbContext, ISpecificationEvaluator specificationEvaluator) : IReadRepository<TEntity>
+    where TEntity : class
 {
     private readonly DbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     private readonly ISpecificationEvaluator _specificationEvaluator = specificationEvaluator ?? throw new ArgumentNullException(nameof(specificationEvaluator));
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="EfReadRepository{TEntity, TId}"/> class
+    /// Initializes a new instance of the <see cref="EfReadRepository{TEntity}"/> class
     /// using the default specification evaluator.
     /// </summary>
     /// <param name="dbContext">The EF Core database context.</param>
@@ -54,11 +52,12 @@ public class EfReadRepository<TEntity, TId>(DbContext dbContext, ISpecificationE
     // ============================================================
 
     /// <inheritdoc />
-    public virtual async Task<TEntity?> GetByIdAsync(TId id, CancellationToken cancellationToken = default)
+    public virtual async Task<TEntity?> GetByIdAsync(object id, CancellationToken cancellationToken = default)
     {
-        return await DbSet.AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id.Equals(id), cancellationToken)
-            .ConfigureAwait(false);
+        var entity = await DbContext.FindAsync<TEntity>([id], cancellationToken).ConfigureAwait(false);
+        if (entity is not null)
+            DbContext.Entry(entity).State = EntityState.Detached;
+        return entity;
     }
 
     // ============================================================

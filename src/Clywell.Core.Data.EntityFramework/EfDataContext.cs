@@ -23,13 +23,12 @@ internal sealed class EfDataContext(DbContext dbContext, ISpecificationEvaluator
     private readonly ConcurrentDictionary<Type, object> _repositories = new();
 
     /// <inheritdoc />
-    public IRepository<TEntity, TId> Repository<TEntity, TId>()
-        where TEntity : class, IEntity<TId>
-        where TId : notnull
+    public IRepository<TEntity> Repository<TEntity>()
+        where TEntity : class
     {
-        return (IRepository<TEntity, TId>)_repositories.GetOrAdd(
+        return (IRepository<TEntity>)_repositories.GetOrAdd(
             typeof(TEntity),
-            _ => new EfRepository<TEntity, TId>(_dbContext, _specificationEvaluator));
+            _ => new EfRepository<TEntity>(_dbContext, _specificationEvaluator));
     }
 
     /// <inheritdoc />

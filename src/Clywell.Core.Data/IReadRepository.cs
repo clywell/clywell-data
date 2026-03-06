@@ -3,8 +3,7 @@ namespace Clywell.Core.Data;
 /// <summary>
 /// Provides read-only data access operations for entities.
 /// </summary>
-/// <typeparam name="TEntity">The entity type. Must implement <see cref="IEntity{TId}"/>.</typeparam>
-/// <typeparam name="TId">The type of the entity's unique identifier.</typeparam>
+/// <typeparam name="TEntity">The entity type.</typeparam>
 /// <remarks>
 /// <para>
 /// This interface is intended to be referenced from the Application layer without
@@ -13,9 +12,8 @@ namespace Clywell.Core.Data;
 /// encapsulated, testable, and provider-independent.
 /// </para>
 /// </remarks>
-public interface IReadRepository<TEntity, TId>
-    where TEntity : class, IEntity<TId>
-    where TId : notnull
+public interface IReadRepository<TEntity>
+    where TEntity : class
 {
     // ============================================================
     // Identity Queries
@@ -27,7 +25,7 @@ public interface IReadRepository<TEntity, TId>
     /// <param name="id">The entity identifier.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The entity if found; otherwise <see langword="null"/>.</returns>
-    Task<TEntity?> GetByIdAsync(TId id, CancellationToken cancellationToken = default);
+    Task<TEntity?> GetByIdAsync(object id, CancellationToken cancellationToken = default);
 
     // ============================================================
     // Specification Queries

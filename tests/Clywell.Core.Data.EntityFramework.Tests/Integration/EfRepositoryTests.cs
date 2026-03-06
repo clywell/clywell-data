@@ -1,19 +1,19 @@
 namespace Clywell.Core.Data.EntityFramework.Tests.Integration;
 
 /// <summary>
-/// Integration tests for <see cref="EfRepository{TEntity, TId}"/> CRUD operations.
+/// Integration tests for <see cref="EfRepository{TEntity}"/> CRUD operations.
 /// </summary>
 public abstract class EfRepositoryTests : IAsyncLifetime
 {
     private TestDbContext _context = null!;
-    private EfRepository<TestEntity, Guid> _repository = null!;
+    private EfRepository<TestEntity> _repository = null!;
 
     protected abstract TestDbContext CreateContext();
 
     public Task InitializeAsync()
     {
         _context = CreateContext();
-        _repository = new EfRepository<TestEntity, Guid>(_context);
+        _repository = new EfRepository<TestEntity>(_context);
         return Task.CompletedTask;
     }
 

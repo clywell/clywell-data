@@ -20,11 +20,11 @@ Your **Infrastructure layer** references `Clywell.Core.Data.EntityFramework` →
 
 ## Features
 
-- **Repository Pattern** — `IReadRepository<T, TId>` and `IRepository<T, TId>` with full CRUD
+- **Repository Pattern** — `IReadRepository<T>` and `IRepository<T>` with full CRUD
 - **Specification Pattern** — Composable, testable, reusable query objects with fluent builder API
 - **Projection Specifications** — `Specification<T, TResult>` with `Select()` for read-optimized queries
 - **Eager Loading** — Strongly-typed `Include` / `ThenInclude` builder with collection support
-- **Unit of Work** — `IDataContext` with `Repository<T, TId>()` (like `DbContext.Set<T>()`), `SaveChangesAsync`, and `BeginTransactionAsync` — single injection for command handlers
+- **Unit of Work** — `IDataContext` with `Repository<T>()` (like `DbContext.Set<T>()`), `SaveChangesAsync`, and `BeginTransactionAsync` — single injection for command handlers
 - **Explicit Transactions** — `IDataTransaction` with `CommitAsync` / `RollbackAsync` and `IAsyncDisposable`
 - **DI Registration** — `AddDataAccess<TContext>()`, `AddRepository<TInterface, TImpl>()`, and `AddRepositoriesFromAssembly()` for auto-scanning, or source-generated `AddRepositories()` for compile-time registration (NativeAOT/trimmer compatible)
 
@@ -58,7 +58,7 @@ public sealed class Ticket : IEntity<Guid>
 ### 2. Define a Repository Interface (Domain Layer)
 
 ```csharp
-public interface ITicketRepository : IRepository<Ticket, Guid>
+public interface ITicketRepository : IRepository<Ticket>
 {
     // Add domain-specific query methods if needed
 }
@@ -117,9 +117,9 @@ public sealed class TicketWithCommentsSpec : Specification<Ticket>
 ```csharp
 public sealed class GetActiveTicketsHandler
 {
-    private readonly IReadRepository<Ticket, Guid> _repository;
+    private readonly IReadRepository<Ticket> _repository;
 
-    public GetActiveTicketsHandler(IReadRepository<Ticket, Guid> repository)
+    public GetActiveTicketsHandler(IReadRepository<Ticket> repository)
         => _repository = repository;
 
     public async Task<IReadOnlyList<Ticket>> HandleAsync(
@@ -168,7 +168,7 @@ public sealed class CreateTicketHandler(IDataContext unitOfWork)
 {
     public async Task<Ticket> HandleAsync(CreateTicketCommand command, CancellationToken ct)
     {
-        var repo = unitOfWork.Repository<Ticket, Guid>();
+        var repo = unitOfWork.Repository<Ticket>();
         var ticket = Ticket.Create(command.TenantId, command.Title);
         await repo.AddAsync(ticket, ct);
         await unitOfWork.SaveChangesAsync(ct);
@@ -184,8 +184,8 @@ public sealed class TransferOwnershipHandler(IDataContext unitOfWork)
 {
     public async Task HandleAsync(TransferCommand command, CancellationToken ct)
     {
-        var tickets = unitOfWork.Repository<Ticket, Guid>();
-        var auditLogs = unitOfWork.Repository<AuditLog, Guid>();
+        var tickets = unitOfWork.Repository<Ticket>();
+        var auditLogs = unitOfWork.Repository<AuditLog>();
 
         var ticket = await tickets.GetByIdAsync(command.TicketId, ct)
             ?? throw new NotFoundException();
@@ -202,13 +202,13 @@ public sealed class TransferOwnershipHandler(IDataContext unitOfWork)
 }
 ```
 
-> **Tip:** You can still inject `IRepository<T, TId>` or custom interfaces like `ITicketRepository`
+> **Tip:** You can still inject `IRepository<T>` or custom interfaces like `ITicketRepository`
 > directly when you prefer explicit constructor dependencies or need domain-specific repository methods.
 
 **Bulk write operations**:
 
 ```csharp
-var repo = unitOfWork.Repository<Ticket, Guid>();
+var repo = unitOfWork.Repository<Ticket>();
 
 // Add multiple entities
 await repo.AddRangeAsync(tickets, ct);
@@ -228,7 +228,7 @@ await unitOfWork.SaveChangesAsync(ct);
 ### 5. Implement the Repository (Infrastructure Layer)
 
 ```csharp
-public sealed class TicketRepository : EfRepository<Ticket, Guid>, ITicketRepository
+public sealed class TicketRepository : EfRepository<Ticket>, ITicketRepository
 {
     public TicketRepository(AppDbContext context) : base(context) { }
 }
@@ -265,7 +265,7 @@ services.AddRepository<IOrderRepository, OrderRepository>();
 
 **Option C — Source-generated registration** (automatic; recommended for NativeAOT / trimmer compatibility):
 
-When you reference `Clywell.Core.Data.EntityFramework`, the bundled Roslyn generator automatically detects every concrete class that implements a repository interface derived from `IRepository<,>` or `IReadRepository<,>` at build time and emits a single `AddRepositories()` extension method — zero reflection, zero assembly scanning.
+When you reference `Clywell.Core.Data.EntityFramework`, the bundled Roslyn generator automatically detects every concrete class that implements a repository interface derived from `IRepository<T>` or `IReadRepository<T>` at build time and emits a single `AddRepositories()` extension method — zero reflection, zero assembly scanning.
 
 ```csharp
 services.AddDbContext<AppDbContext>(options =>
@@ -277,7 +277,7 @@ services.AddRepositories(); // generated automatically — zero reflection, Nati
 
 The generated file `RepositoryRegistrationExtensions.g.cs` is placed in your project's root namespace so no extra `using` directive is required. Each registration uses `TryAddScoped`, so you can still override individual registrations before or after calling `AddRepositories()`.
 
-> **How it works:** The generator detects any non-abstract, non-generic class whose interface chain includes a user-defined sub-interface of `IRepository<,>` or `IReadRepository<,>`. The base interfaces themselves are not registered directly — only your domain-specific interfaces (e.g. `ITicketRepository`) are wired up.
+> **How it works:** The generator detects any non-abstract, non-generic class whose interface chain includes a user-defined sub-interface of `IRepository<T>` or `IReadRepository<T>`. The base interfaces themselves are not registered directly — only your domain-specific interfaces (e.g. `ITicketRepository`) are wired up.
 >
 > **What is NOT required:** You do not need `AddRepositoriesFromAssembly()` or any reflection-based scan when using the generator. Both approaches are mutually exclusive — pick one per project. No separate package install is needed; the generator is bundled inside `Clywell.Core.Data.EntityFramework`.
 
@@ -311,11 +311,11 @@ Resolve the current tenant from a trusted identity service rather than request p
 ```csharp
 public sealed class GetTicketsHandler
 {
-    private readonly IReadRepository<Ticket, Guid> _repository;
+    private readonly IReadRepository<Ticket> _repository;
     private readonly ICurrentTenant _currentTenant; // e.g., from your auth middleware
 
     public GetTicketsHandler(
-        IReadRepository<Ticket, Guid> repository,
+        IReadRepository<Ticket> repository,
         ICurrentTenant currentTenant)
     {
         _repository = repository;
@@ -338,7 +338,7 @@ Before updating or deleting an entity, confirm it belongs to the current tenant:
 ```csharp
 public async Task HandleAsync(UpdateTicketCommand command, CancellationToken ct)
 {
-    var repo = _unitOfWork.Repository<Ticket, Guid>();
+    var repo = _unitOfWork.Repository<Ticket>();
 
     // Fetch using a spec that combines tenant + entity ID — both must match.
     var spec = new TicketByIdForTenantSpec(_currentTenant.TenantId, command.TicketId);
@@ -385,12 +385,12 @@ public sealed class PagedTicketsSpec : Specification<Ticket>
 
 ### Principle of Least Privilege
 
-Inject `IReadRepository<T, TId>` in query handlers — not `IRepository<T, TId>`. This makes the
+Inject `IReadRepository<T>` in query handlers — not `IRepository<T>`. This makes the
 intent explicit and prevents accidental writes from read-only code paths:
 
 ```csharp
 // Correct — read-only handler receives read-only repository
-public sealed class GetTicketsHandler(IReadRepository<Ticket, Guid> repository) { ... }
+public sealed class GetTicketsHandler(IReadRepository<Ticket> repository) { ... }
 
 // Correct — command handler receives unit of work (single injection)
 public sealed class CreateTicketHandler(IDataContext unitOfWork) { ... }
@@ -404,7 +404,7 @@ when an exception is thrown:
 ```csharp
 public async Task HandleAsync(TransferTicketsCommand command, CancellationToken ct)
 {
-    var ticketRepo = _unitOfWork.Repository<Ticket, Guid>();
+    var ticketRepo = _unitOfWork.Repository<Ticket>();
 
     await using var transaction = await _unitOfWork.BeginTransactionAsync(ct);
     try
@@ -441,21 +441,21 @@ public async Task HandleAsync(TransferTicketsCommand command, CancellationToken 
 | Type                            | Purpose                                                              |
 | ------------------------------- | -------------------------------------------------------------------- |
 | `IEntity<TId>`                  | Base entity identity contract                                        |
-| `IReadRepository<TEntity, TId>` | Read-only: `GetByIdAsync`, `ListAsync`, `FirstOrDefaultAsync`, `CountAsync`, `AnyAsync` |
-| `IRepository<TEntity, TId>`     | Full CRUD: extends `IReadRepository` + `AddAsync`, `AddRangeAsync`, `Update`, `UpdateRange`, `Remove`, `RemoveRange` |
+| `IReadRepository<TEntity>` | Read-only: `GetByIdAsync`, `ListAsync`, `FirstOrDefaultAsync`, `CountAsync`, `AnyAsync` |
+| `IRepository<TEntity>`     | Full CRUD: extends `IReadRepository` + `AddAsync`, `AddRangeAsync`, `Update`, `UpdateRange`, `Remove`, `RemoveRange` |
 | `ISpecification<T>`             | Query specification interface                                        |
 | `Specification<T>`              | Fluent spec builder: `Where`, `OrderBy`, `OrderByDescending`, `Include`, `IncludeCollection`, `ApplyPaging`, `AsReadOnly` |
 | `Specification<T, TResult>`     | Projection spec builder: extends `Specification<T>` with `Select()` |
 | `IIncludeBuilder<T, TProperty>` | Fluent builder for chaining `ThenInclude` / `ThenIncludeCollection`  |
 | `ISpecificationEvaluator`       | Pluggable spec-to-query translation                                  |
-| `IDataContext`                   | `Repository<T, TId>()` + `SaveChangesAsync` + `BeginTransactionAsync` |
+| `IDataContext`                   | `Repository<T>()` + `SaveChangesAsync` + `BeginTransactionAsync` |
 | `IDataTransaction`              | `CommitAsync` + `RollbackAsync` (`IAsyncDisposable`)                 |
 
-#### `IReadRepository<TEntity, TId>` Methods
+#### `IReadRepository<TEntity>` Methods
 
 | Method | Description |
 | ------ | ----------- |
-| `GetByIdAsync(TId, ct)` | Returns the entity with the given ID, or `null` |
+| `GetByIdAsync(object, ct)` | Returns the entity with the given ID, or `null` |
 | `ListAsync(ISpecification<T>, ct)` | Returns all entities matching the specification |
 | `ListAsync<TResult>(ISpecification<T, TResult>, ct)` | Returns projected results matching the specification |
 | `ListAsync(ct)` | Returns all entities (no filter) |
@@ -463,7 +463,7 @@ public async Task HandleAsync(TransferTicketsCommand command, CancellationToken 
 | `CountAsync(ISpecification<T>, ct)` | Returns the count of matching entities (ignores paging/ordering) |
 | `AnyAsync(ISpecification<T>, ct)` | Returns `true` if any entity matches the specification |
 
-#### `IRepository<TEntity, TId>` Additional Methods
+#### `IRepository<TEntity>` Additional Methods
 
 | Method | Description |
 | ------ | ----------- |
@@ -501,8 +501,8 @@ IncludeCollection(t => t.Comments)          // Include comments collection
 
 | Type                             | Purpose                                              |
 | -------------------------------- | ---------------------------------------------------- |
-| `EfReadRepository<TEntity, TId>` | Read-only EF Core repository; applies `AsNoTracking` |
-| `EfRepository<TEntity, TId>`     | Full CRUD; `GetByIdAsync` uses `FindAsync` (tracked) |
+| `EfReadRepository<TEntity>` | Read-only EF Core repository; applies `AsNoTracking`; `GetByIdAsync` uses `FindAsync` + detach |
+| `EfRepository<TEntity>`     | Full CRUD; `GetByIdAsync` uses `FindAsync` (tracked) |
 | `EfDataContext`                   | Wraps `DbContext`; exposes repos via `Repository<>()` + `SaveChangesAsync` |
 | `EfDataTransaction`              | Wraps `IDbContextTransaction`; rolls back on dispose |
 | `EfSpecificationEvaluator`       | Translates `ISpecification` to EF Core LINQ          |

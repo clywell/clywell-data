@@ -35,12 +35,12 @@ public sealed class TestCategory : IEntity<Guid>
 /// <summary>
 /// Custom repository interface for assembly-scanning tests.
 /// </summary>
-public interface ITestEntityRepository : IRepository<TestEntity, Guid>;
+public interface ITestEntityRepository : IRepository<TestEntity>;
 
 /// <summary>
 /// Custom repository implementation for assembly-scanning tests.
 /// </summary>
-public sealed class TestEntityRepository(TestDbContext context) : EfRepository<TestEntity, Guid>(context), ITestEntityRepository;
+public sealed class TestEntityRepository(TestDbContext context) : EfRepository<TestEntity>(context), ITestEntityRepository;
 
 public sealed class TestDbContext(DbContextOptions<TestDbContext> options) : DbContext(options)
 {

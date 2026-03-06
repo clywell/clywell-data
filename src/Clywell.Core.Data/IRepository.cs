@@ -3,21 +3,19 @@ namespace Clywell.Core.Data;
 /// <summary>
 /// Provides full CRUD data access operations for entities.
 /// </summary>
-/// <typeparam name="TEntity">The entity type. Must implement <see cref="IEntity{TId}"/>.</typeparam>
-/// <typeparam name="TId">The type of the entity's unique identifier.</typeparam>
+/// <typeparam name="TEntity">The entity type.</typeparam>
 /// <remarks>
 /// <para>
-/// Extends <see cref="IReadRepository{TEntity, TId}"/> with write operations (Add, Update, Remove).
+/// Extends <see cref="IReadRepository{TEntity}"/> with write operations (Add, Update, Remove).
 /// Changes are not persisted until <see cref="IDataContext.SaveChangesAsync"/> is called.
 /// </para>
 /// <para>
 /// This interface is intended to be referenced from the Application layer. The Infrastructure
-/// layer provides the EF Core implementation via <c>EfRepository&lt;TEntity, TId&gt;</c>.
+/// layer provides the EF Core implementation via <c>EfRepository&lt;TEntity&gt;</c>.
 /// </para>
 /// </remarks>
-public interface IRepository<TEntity, TId> : IReadRepository<TEntity, TId>
-    where TEntity : class, IEntity<TId>
-    where TId : notnull
+public interface IRepository<TEntity> : IReadRepository<TEntity>
+    where TEntity : class
 {
     // ============================================================
     // Write Operations

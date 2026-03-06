@@ -44,11 +44,11 @@ public class ServiceCollectionExtensionsTests
         services.AddDbContext<TestDbContext>(options =>
             SqliteDbContextOptionsBuilderExtensions.UseSqlite(options, "DataSource=:memory:"));
         services.AddDataAccess<TestDbContext>();
-        services.AddRepository<IRepository<TestEntity, Guid>, TestEntityRepository>();
+        services.AddRepository<IRepository<TestEntity>, TestEntityRepository>();
 
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
-        var repo = scope.ServiceProvider.GetService<IRepository<TestEntity, Guid>>();
+        var repo = scope.ServiceProvider.GetService<IRepository<TestEntity>>();
 
         Assert.NotNull(repo);
         Assert.IsType<TestEntityRepository>(repo);
@@ -96,8 +96,8 @@ public class ServiceCollectionExtensionsTests
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
 
-        var repo = scope.ServiceProvider.GetService<IRepository<TestEntity, Guid>>();
-        var readRepo = scope.ServiceProvider.GetService<IReadRepository<TestEntity, Guid>>();
+        var repo = scope.ServiceProvider.GetService<IRepository<TestEntity>>();
+        var readRepo = scope.ServiceProvider.GetService<IReadRepository<TestEntity>>();
 
         Assert.NotNull(repo);
         Assert.NotNull(readRepo);
