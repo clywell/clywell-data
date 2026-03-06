@@ -83,6 +83,25 @@ public class EfReadRepository<TEntity>(DbContext dbContext, ISpecificationEvalua
     }
 
     /// <inheritdoc />
+    public virtual async Task<(IReadOnlyList<TResult> Items, int TotalCount)> ListPagedAsync<TResult>(
+        ISpecification<TEntity, TResult> specification,
+        CancellationToken cancellationToken = default)
+    {
+        var totalCount = await CountAsync(specification, cancellationToken).ConfigureAwait(false);
+        var items = await ListAsync(specification, cancellationToken).ConfigureAwait(false);
+        return (items, totalCount);
+    }
+
+    /// <inheritdoc />
+    public virtual async Task<TResult?> FirstOrDefaultAsync<TResult>(
+        ISpecification<TEntity, TResult> specification,
+        CancellationToken cancellationToken = default)
+    {
+        var query = ApplySpecification(specification);
+        return await query.FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public virtual async Task<IReadOnlyList<TEntity>> ListAsync(CancellationToken cancellationToken = default)
     {
         return await DbSet.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);

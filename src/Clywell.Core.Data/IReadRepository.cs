@@ -49,6 +49,32 @@ public interface IReadRepository<TEntity>
     Task<IReadOnlyList<TResult>> ListAsync<TResult>(ISpecification<TEntity, TResult> specification, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves a paged list of projected results along with the total count of matching entities,
+    /// executing the count and data queries sequentially against the same data context.
+    /// </summary>
+    /// <typeparam name="TResult">The projected result type.</typeparam>
+    /// <param name="specification">The specification defining filter, ordering, paging, and projection.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>
+    /// A tuple containing the paged projected items and the total count of all matching entities
+    /// (before paging).
+    /// </returns>
+    Task<(IReadOnlyList<TResult> Items, int TotalCount)> ListPagedAsync<TResult>(
+        ISpecification<TEntity, TResult> specification,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the first projected result matching the specification, or <see langword="null"/> if none match.
+    /// </summary>
+    /// <typeparam name="TResult">The projected result type.</typeparam>
+    /// <param name="specification">The specification with projection to evaluate.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The first projected result, or <see langword="null"/>.</returns>
+    Task<TResult?> FirstOrDefaultAsync<TResult>(
+        ISpecification<TEntity, TResult> specification,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves all entities (no filtering).
     /// </summary>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
