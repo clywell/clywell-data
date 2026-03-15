@@ -26,12 +26,12 @@
         <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
 
         <!-- Entity Framework Core -->
-        <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
-        <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.3" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.5" />
 
         <!-- Integration Testing -->
-        <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.3" />
-        <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+        <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
         <PackageVersion Include="Testcontainers.PostgreSql" Version="4.10.0" />
         <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     </ItemGroup>

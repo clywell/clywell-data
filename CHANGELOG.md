@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-03-15
+
+### Changed
+
+#### Dependency Updates
+- `Clywell.Core.Data.EntityFramework` now targets `Microsoft.EntityFrameworkCore` `10.0.5` (from `10.0.3`)
+- `Clywell.Core.Data.EntityFramework` now targets `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (from `10.0.3`)
+- test dependencies updated to `Microsoft.EntityFrameworkCore.Sqlite` `10.0.5` and `Microsoft.Extensions.DependencyInjection` `10.0.5`
+
 ## [2.0.0] - 2026-03-06
 
 ### Breaking Changes
@@ -91,7 +100,8 @@ Replace all two-argument repository generic usages with single-argument equivale
 - No runtime dependency; `DevelopmentDependency = true` means the package does not appear in consuming projects' dependency graphs
 - Replaces `AddRepositoriesFromAssembly()` / `AddRepositoriesFromAssemblyContaining<T>()` for projects that require AOT or trim compatibility
 
-[Unreleased]: https://github.com/clywell/clywell-core/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/clywell/clywell-core/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/clywell/clywell-core/compare/v2.1.0...v2.1.1
 [2.0.0]: https://github.com/clywell/clywell-core/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/clywell/clywell-core/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/clywell/clywell-core/compare/v1.0.0...v1.0.1
