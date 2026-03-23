@@ -113,6 +113,17 @@ public static class ServiceCollectionExtensions
         return services.AddRepositoriesFromAssembly(typeof(T).Assembly);
     }
 
+    /// <summary>
+    /// Registers <see cref="DomainEventDispatchInterceptor"/> as a singleton.
+    /// Also call <see cref="DbContextOptionsBuilderExtensions.UseDomainEventDispatchInterceptor"/>
+    /// on your DbContext options to wire it in.
+    /// </summary>
+    public static IServiceCollection AddDomainEventDispatching(this IServiceCollection services)
+    {
+        services.AddSingleton<DomainEventDispatchInterceptor>();
+        return services;
+    }
+
     private static bool IsRepositoryInterface(Type type)
     {
         if (!type.IsInterface)

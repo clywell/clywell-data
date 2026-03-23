@@ -26,6 +26,7 @@
         <ProjectReference Include="..\Clywell.Core.Data\Clywell.Core.Data.csproj" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     </ItemGroup>
     <!-- Source generator — bundled as analyzer so consumers get compile-time DI registration -->
     <ItemGroup>

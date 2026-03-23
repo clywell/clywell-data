@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-03-23
+
+### Added
+
+#### `Clywell.Core.Data` (Abstractions)
+- `IHasDomainEvents` — non-generic interface exposing `IReadOnlyList<IDomainEvent> DomainEvents` and `ClearDomainEvents()`. Used by EF Core interceptors to drain events without knowledge of the entity's key type.
+- `Entity<TId>` — abstract base class for domain entities. Implements both `IEntity<TId>` and `IHasDomainEvents`. Exposes `RaiseDomainEvent(IDomainEvent)` (protected) for raising events from within the entity, and `ClearDomainEvents()` for use by interceptors after dispatch.
+
+#### `Clywell.Core.Data.EntityFramework` (EF Core Implementation)
+- `IDomainEventDispatcher` — interface for dispatching a list of `IDomainEvent` instances to their registered handlers. Implemented by `Clywell.Core.Messaging`.
+- `DomainEventDispatchInterceptor` — singleton `SaveChangesInterceptor` that dispatches domain events after `SaveChangesAsync` succeeds (post-save, in-process only). Resolves `IDomainEventDispatcher` per invocation via `IServiceScopeFactory` to prevent captive-dependency issues.
+- `DbContextOptionsBuilderExtensions.UseDomainEventDispatchInterceptor(IServiceProvider)` — wires `DomainEventDispatchInterceptor` onto a `DbContextOptionsBuilder`. Call from an `IDbContextOptionsConfiguration<T>` implementation.
+- `ServiceCollectionExtensions.AddDomainEventDispatching()` — registers `DomainEventDispatchInterceptor` as a singleton.
+
+### Changed
+
+- Updated dependency: `Clywell.Primitives` → `1.2.0` (adds `IDomainEvent` and `IIntegrationEvent`).
+
 ## [2.1.1] - 2026-03-15
 
 ### Changed
