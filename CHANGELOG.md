@@ -118,7 +118,8 @@ Replace all two-argument repository generic usages with single-argument equivale
 - No runtime dependency; `DevelopmentDependency = true` means the package does not appear in consuming projects' dependency graphs
 - Replaces `AddRepositoriesFromAssembly()` / `AddRepositoriesFromAssemblyContaining<T>()` for projects that require AOT or trim compatibility
 
-[Unreleased]: https://github.com/clywell/clywell-core/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/clywell/clywell-core/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/clywell/clywell-core/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/clywell/clywell-core/compare/v2.1.0...v2.1.1
 [2.0.0]: https://github.com/clywell/clywell-core/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/clywell/clywell-core/compare/v1.0.1...v1.1.0
