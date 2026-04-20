@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-04-20
+
+### Changed
+
+#### `Clywell.Core.Data`
+- Bumped `Microsoft.SourceLink.GitHub` from `10.0.201` to `10.0.202`
+
+#### `Clywell.Core.Data.EntityFramework`
+- Bumped `Microsoft.EntityFrameworkCore` from `10.0.5` to `10.0.6`
+- Bumped `Microsoft.EntityFrameworkCore.Relational` from `10.0.5` to `10.0.6`
+- Bumped `Microsoft.Extensions.DependencyInjection.Abstractions` from `10.0.5` to `10.0.6`
+- Bumped `Microsoft.SourceLink.GitHub` from `10.0.201` to `10.0.202`
+
+#### Test dependencies
+- Bumped `Microsoft.EntityFrameworkCore.Sqlite` from `10.0.5` to `10.0.6`
+- Bumped `Microsoft.Extensions.DependencyInjection` from `10.0.5` to `10.0.6`
+- Bumped `coverlet.collector` from `8.0.1` to `10.0.0`
+
 ## [2.2.0] - 2026-03-23
 
 ### Added
