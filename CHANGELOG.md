@@ -5,6 +5,18 @@ All notable changes to the Clywell.Core.Data packages will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 2026-06-01
+
+### Changed
+
+#### Dependency Updates
+
+- Bumped `Microsoft.EntityFrameworkCore` from `10.0.6` to `10.0.7`
+- Bumped `Microsoft.EntityFrameworkCore.Relational` from `10.0.6` to `10.0.7`
+- Bumped `Microsoft.Extensions.DependencyInjection.Abstractions` from `10.0.6` to `10.0.7`
+- Bumped `Microsoft.SourceLink.GitHub` from `10.0.202` to `10.0.203`
+
+
 ## [Unreleased]
 
 ## [2.2.1] - 2026-04-20
